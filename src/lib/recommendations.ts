@@ -9,6 +9,11 @@ export interface PersonalContext {
   riskAppetite: "low" | "medium" | "high";
 }
 
+export interface ProductSplit {
+  product: string;
+  amount: number;
+}
+
 export interface PlanStep {
   id: string;
   title: string;
@@ -19,6 +24,29 @@ export interface PlanStep {
   category: string; // for affiliate links
   ctaLabel: string;
   advisoryOnly?: boolean; // step where we can't compute exact savings
+  breakdown?: ProductSplit[]; // income/risk-based product allocation
+}
+
+// Split the 80C amount into specific products based on risk appetite.
+function split80C(amount: number, risk: PersonalContext["riskAppetite"]): ProductSplit[] {
+  const round = (n: number) => Math.max(0, Math.round(n / 500) * 500);
+  let weights: [string, number][];
+  if (risk === "high") weights = [["ELSS mutual funds", 0.8], ["PPF", 0.2]];
+  else if (risk === "low") weights = [["PPF", 0.7], ["5-year tax-saving FD", 0.3]];
+  else weights = [["ELSS mutual funds", 0.5], ["PPF", 0.5]];
+
+  const parts: ProductSplit[] = [];
+  let allocated = 0;
+  weights.forEach(([product, w], i) => {
+    let amt: number;
+    if (i === weights.length - 1) amt = Math.max(0, amount - allocated);
+    else {
+      amt = round(amount * w);
+      allocated += amt;
+    }
+    parts.push({ product, amount: amt });
+  });
+  return parts;
 }
 
 export interface PersonalizedPlan {
@@ -82,21 +110,23 @@ export function getPersonalizedPlan(
   const add80C = 150000 - used80C;
   if (add80C > 0) {
     const rp = riskProduct(ctx.riskAppetite);
+    const breakdown = split80C(add80C, ctx.riskAppetite);
     const kidsNote = ctx.schoolKids
-      ? " Your children's school tuition fees also count under 80C — include them first, then top up the rest."
+      ? " Tip: your children's school tuition fees already count under 80C — count those first, then top up with the split below."
       : "";
     const saved = applyAndMeasure(() => {
       working.section80C = used80C + add80C;
     });
     steps.push({
       id: "80c",
-      title: `Invest ₹${add80C.toLocaleString("en-IN")} in ${rp.product}`,
+      title: `Invest ₹${add80C.toLocaleString("en-IN")} under Section 80C`,
       section: "80C",
       invest: add80C,
       taxSaved: saved,
-      why: `${rp.note}${kidsNote}`,
+      why: `Here is the ideal split for your ${ctx.riskAppetite}-risk profile. ${rp.note}${kidsNote}`,
       category: rp.category,
       ctaLabel: rp.cta,
+      breakdown,
     });
   }
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TaxCalculator from "@/components/TaxCalculator";
+import { calculateNewRegime, formatINR, type TaxInput } from "@/lib/tax";
 import {
   HeroIllustration,
   CompareIcon,
@@ -9,6 +10,23 @@ import {
   ShieldIcon,
   ClockIcon,
 } from "@/components/Illustrations";
+
+// Pre-computed (at build time) tax on popular salaries — great for SEO.
+const baseInput: TaxInput = {
+  grossSalary: 0,
+  otherIncome: 0,
+  ageGroup: "below60",
+  section80C: 0,
+  section80D: 0,
+  section80CCD1B: 0,
+  homeLoanInterest: 0,
+  hraExemption: 0,
+  otherDeductions: 0,
+};
+const salaryTable = [700000, 1000000, 1200000, 1500000, 2000000, 2500000, 3000000].map((s) => ({
+  salary: s,
+  tax: calculateNewRegime({ ...baseInput, grossSalary: s }).totalTax,
+}));
 
 export default function HomePage() {
   return (
@@ -189,6 +207,44 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== TAX ON SALARY TABLE (SEO) ===== */}
+      <section className="py-16 bg-white dark:bg-slate-900">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
+            How Much Income Tax Will You Pay? (New Regime, FY 2025-26)
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            Quick reference for a salaried person under the new regime (with the ₹75,000 standard deduction, no other deductions).
+            Want your exact number with your deductions? <Link href="#calculator" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">Build your plan above.</Link>
+          </p>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm">
+                <tr>
+                  <th className="px-5 py-3 font-semibold">Annual Salary</th>
+                  <th className="px-5 py-3 font-semibold">Income Tax (New Regime)</th>
+                  <th className="px-5 py-3 font-semibold">Monthly Take-Home (approx)</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {salaryTable.map((r, i) => (
+                  <tr key={r.salary} className={i % 2 ? "bg-slate-50/50 dark:bg-slate-800/40" : ""}>
+                    <td className="px-5 py-3 font-medium text-slate-800 dark:text-slate-100">{formatINR(r.salary)}</td>
+                    <td className="px-5 py-3 font-bold text-indigo-600 dark:text-indigo-400">
+                      {r.tax === 0 ? "₹0 (Tax-Free!)" : formatINR(r.tax)}
+                    </td>
+                    <td className="px-5 py-3 text-slate-600 dark:text-slate-300">{formatINR((r.salary - r.tax) / 12)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-slate-400 mt-3">
+            Figures are estimates for a salaried individual below 60, new regime, FY 2025-26 / 2026-27. Take-home is before EPF/PF and professional tax.
+          </p>
+        </div>
+      </section>
+
       {/* ===== FAQ ===== */}
       <section className="py-16 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -250,27 +306,31 @@ function SaveCard({ icon, tag, title, desc }: { icon: React.ReactNode; tag: stri
 
 const faqs = [
   {
-    q: "Is this income tax calculator free?",
-    a: "Yes, BachatGuru is 100% free with no signup required. Calculate your tax and get savings recommendations instantly.",
+    q: "How much income tax on 12 lakh salary in FY 2025-26?",
+    a: "Under the new regime, a salaried person earning ₹12 lakh pays ₹0 income tax. With the ₹75,000 standard deduction your taxable income drops to ₹11.25 lakh, and the Section 87A rebate makes tax up to ₹12 lakh taxable income zero. So you can earn up to ₹12.75 lakh salary and pay no tax.",
+  },
+  {
+    q: "How much tax on 15 lakh salary?",
+    a: "Under the new regime, a ₹15 lakh salary has ₹14.25 lakh taxable income (after ₹75,000 standard deduction) and the tax works out to about ₹97,500 including cess. With old-regime deductions like 80C, NPS and home loan, you may be able to reduce this further — use the planner above to compare.",
   },
   {
     q: "Which tax regime is better — old or new?",
-    a: "It depends on your deductions. If you have significant 80C investments, a home loan, and HRA, the old regime often saves more. With few deductions, the new regime usually wins. Our calculator compares both for your exact situation.",
+    a: "It depends on your deductions. If you have significant 80C investments, a home loan, and HRA, the old regime often saves more. With few deductions, the new regime usually wins. Our planner compares both for your exact situation and tells you which to pick.",
   },
   {
-    q: "What is the income tax slab for FY 2025-26?",
-    a: "Under the new regime: 0-4L is nil, 4-8L is 5%, 8-12L is 10%, 12-16L is 15%, 16-20L is 20%, 20-24L is 25%, and above 24L is 30%. Income up to ₹12 lakh is effectively tax-free due to the 87A rebate.",
+    q: "Is income up to 7 lakh tax-free?",
+    a: "Under the new regime, income up to ₹12 lakh is effectively tax-free (FY 2025-26) thanks to the enhanced Section 87A rebate. Under the old regime, the rebate makes income up to ₹5 lakh tax-free.",
   },
   {
     q: "What does Section 80C mean?",
-    a: "Section 80C is a part of the Income Tax Act that lets you reduce your taxable income by up to ₹1.5 lakh per year by investing in things like PPF, ELSS mutual funds, EPF, life insurance, and paying children's tuition fees.",
+    a: "Section 80C lets you reduce your taxable income by up to ₹1.5 lakh per year by investing in PPF, ELSS mutual funds, EPF, life insurance, 5-year tax-saver FDs, or paying children's tuition fees. In the 30% bracket this saves up to ₹46,800 including cess.",
+  },
+  {
+    q: "How is this different from a normal tax calculator?",
+    a: "Most calculators only tell you how much tax you owe. BachatGuru goes further — based on your income, family situation, home and risk appetite, it builds a personalized action plan showing the exact investment mix (how much in ELSS, PPF, NPS, health insurance) to legally pay the least tax, and lets you download it as a PDF.",
   },
   {
     q: "Is my financial data safe?",
     a: "Absolutely. All calculations happen entirely in your browser. We never store, send, or see any of your financial information.",
-  },
-  {
-    q: "How much tax can I save with 80C?",
-    a: "Section 80C allows deductions up to ₹1.5 lakh. If you're in the 30% tax bracket, fully using 80C can save you up to ₹46,800 (including cess) per year.",
   },
 ];

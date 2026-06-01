@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { formatINR, type ComparisonResult } from "@/lib/tax";
 import type { PersonalizedPlan } from "@/lib/recommendations";
+import { downloadPlanPdf } from "@/lib/pdf";
 import CountUp from "./CountUp";
 
 interface Props {
@@ -77,12 +78,20 @@ export default function ResultsPanel({ result, plan }: Props) {
 
           <p className="text-sm text-indigo-50 mt-4">{plan.regimeNote}</p>
 
-          <button
-            onClick={handleShare}
-            className="mt-4 inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
-          >
-            {copied ? "✓ Copied!" : "↗ Share my plan"}
-          </button>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 backdrop-blur px-5 py-2 rounded-xl text-sm font-semibold transition-colors"
+            >
+              {copied ? "✓ Copied!" : "↗ Share my plan"}
+            </button>
+            <button
+              onClick={() => downloadPlanPdf(plan)}
+              className="inline-flex items-center gap-2 bg-white text-indigo-700 hover:bg-indigo-50 px-5 py-2 rounded-xl text-sm font-bold transition-colors"
+            >
+              ⬇ Download PDF plan
+            </button>
+          </div>
         </div>
       </div>
 
@@ -112,6 +121,22 @@ export default function ResultsPanel({ result, plan }: Props) {
                     </div>
                     <h4 className="font-semibold text-slate-800 dark:text-slate-100">{step.title}</h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{step.why}</p>
+                    {step.breakdown && step.breakdown.some((b) => b.amount > 0) && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {step.breakdown
+                          .filter((b) => b.amount > 0)
+                          .map((b) => (
+                            <span
+                              key={b.product}
+                              className="inline-flex items-center gap-1.5 text-xs font-medium bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg"
+                            >
+                              <span className="font-bold">{formatINR(b.amount)}</span>
+                              <span className="text-indigo-400">→</span>
+                              {b.product}
+                            </span>
+                          ))}
+                      </div>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     {step.advisoryOnly ? (
