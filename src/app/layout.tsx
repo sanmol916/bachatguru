@@ -49,13 +49,25 @@ export const metadata: Metadata = {
   },
 };
 
+const themeScript = `
+try {
+  var t = localStorage.getItem('theme');
+  if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+} catch (e) {}
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="geo.region" content="IN" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={`${inter.className} bg-gray-50 min-h-screen flex flex-col`}>
+      <body
+        className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col`}
+      >
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

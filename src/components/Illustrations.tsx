@@ -1,20 +1,18 @@
-// Reusable, lightweight SVG illustrations for a bold, professional fintech look.
-// No external images = instant load, never breaks, always crisp.
+// Reusable, lightweight SVG illustrations for a bold, modern fintech look.
+// No external images = instant load, never breaks, always crisp, works in dark mode.
 
 export function HeroIllustration({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 420 360" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      {/* soft backdrop */}
       <circle cx="210" cy="180" r="160" fill="rgba(255,255,255,0.08)" />
       <circle cx="210" cy="180" r="110" fill="rgba(255,255,255,0.06)" />
 
       {/* growth chart card */}
       <rect x="70" y="120" width="190" height="150" rx="16" fill="#ffffff" />
-      <rect x="70" y="120" width="190" height="150" rx="16" fill="url(#g1)" opacity="0.08" />
       {/* bars */}
-      <rect x="92" y="210" width="22" height="42" rx="4" fill="#10b981" />
-      <rect x="124" y="186" width="22" height="66" rx="4" fill="#14b8a6" />
-      <rect x="156" y="160" width="22" height="92" rx="4" fill="#0d9488" />
+      <rect x="92" y="210" width="22" height="42" rx="4" fill="#818cf8" />
+      <rect x="124" y="186" width="22" height="66" rx="4" fill="#6366f1" />
+      <rect x="156" y="160" width="22" height="92" rx="4" fill="#7c3aed" />
       <rect x="188" y="138" width="22" height="114" rx="4" fill="#f59e0b" />
       {/* rising line */}
       <path d="M92 200 L135 176 L168 150 L210 128" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -25,17 +23,10 @@ export function HeroIllustration({ className = "" }: { className?: string }) {
       <circle cx="300" cy="120" r="44" fill="#fbbf24" opacity="0.5" />
       <text x="300" y="138" textAnchor="middle" fontSize="48" fontWeight="bold" fill="#92400e">₹</text>
 
-      {/* small coins stack */}
-      <ellipse cx="120" cy="292" rx="40" ry="12" fill="#f59e0b" />
-      <ellipse cx="120" cy="284" rx="40" ry="12" fill="#fbbf24" />
-      <ellipse cx="120" cy="276" rx="40" ry="12" fill="#f59e0b" />
-
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <stop stopColor="#10b981" />
-          <stop offset="1" stopColor="#0d9488" />
-        </linearGradient>
-      </defs>
+      {/* coin stack */}
+      <ellipse cx="120" cy="292" rx="40" ry="12" fill="#6366f1" />
+      <ellipse cx="120" cy="284" rx="40" ry="12" fill="#818cf8" />
+      <ellipse cx="120" cy="276" rx="40" ry="12" fill="#6366f1" />
     </svg>
   );
 }
@@ -43,9 +34,9 @@ export function HeroIllustration({ className = "" }: { className?: string }) {
 export function CompareIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="6" y="6" width="52" height="52" rx="14" fill="#d1fae5" />
-      <path d="M22 40V28M32 40V20M42 40V32" stroke="#059669" strokeWidth="4" strokeLinecap="round" />
-      <path d="M16 44h32" stroke="#059669" strokeWidth="4" strokeLinecap="round" />
+      <rect x="6" y="6" width="52" height="52" rx="14" fill="#e0e7ff" />
+      <path d="M22 40V28M32 40V20M42 40V32" stroke="#4f46e5" strokeWidth="4" strokeLinecap="round" />
+      <path d="M16 44h32" stroke="#4f46e5" strokeWidth="4" strokeLinecap="round" />
     </svg>
   );
 }
@@ -84,11 +75,11 @@ export function ShieldIcon({ className = "" }: { className?: string }) {
 export function PiggyIcon({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="6" y="6" width="52" height="52" rx="14" fill="#d1fae5" />
-      <ellipse cx="31" cy="36" rx="17" ry="13" fill="#10b981" />
+      <rect x="6" y="6" width="52" height="52" rx="14" fill="#e0e7ff" />
+      <ellipse cx="31" cy="36" rx="17" ry="13" fill="#6366f1" />
       <circle cx="38" cy="33" r="2.5" fill="#fff" />
-      <rect x="28" y="20" width="10" height="5" rx="2.5" fill="#059669" />
-      <path d="M18 40l-3 5M44 40l3 5M22 47v3M40 47v3" stroke="#059669" strokeWidth="3" strokeLinecap="round" />
+      <rect x="28" y="20" width="10" height="5" rx="2.5" fill="#4f46e5" />
+      <path d="M18 40l-3 5M44 40l3 5M22 47v3M40 47v3" stroke="#4f46e5" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }

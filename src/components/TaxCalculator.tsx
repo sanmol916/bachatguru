@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  compareRegimes,
-  type TaxInput,
-  type AgeGroup,
-} from "@/lib/tax";
+import { compareRegimes, type TaxInput, type AgeGroup } from "@/lib/tax";
 import { getRecommendations, type Recommendation } from "@/lib/recommendations";
 import ResultsPanel from "./ResultsPanel";
 import InfoTip from "./InfoTip";
@@ -21,6 +17,14 @@ const emptyInput: TaxInput = {
   hraExemption: 0,
   otherDeductions: 0,
 };
+
+const salaryPresets = [
+  { label: "₹5L", value: "500000" },
+  { label: "₹10L", value: "1000000" },
+  { label: "₹15L", value: "1500000" },
+  { label: "₹20L", value: "2000000" },
+  { label: "₹30L", value: "3000000" },
+];
 
 export default function TaxCalculator() {
   const [form, setForm] = useState({
@@ -80,6 +84,9 @@ export default function TaxCalculator() {
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
       setForm({ ...form, [key]: e.target.value });
 
+  const inputClass =
+    "w-full pl-7 pr-3 py-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-500/20 outline-none transition-all text-slate-800 dark:text-slate-100 font-medium";
+
   const field = (
     label: string,
     key: keyof typeof form,
@@ -87,12 +94,12 @@ export default function TaxCalculator() {
     tip: { title: string; text: string }
   ) => (
     <div>
-      <label className="flex items-center text-sm font-semibold text-gray-700 mb-1.5">
+      <label className="flex items-center text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
         {label}
         <InfoTip title={tip.title}>{tip.text}</InfoTip>
       </label>
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₹</span>
         <input
           type="number"
           min="0"
@@ -100,7 +107,7 @@ export default function TaxCalculator() {
           value={form[key] as string}
           onChange={update(key)}
           placeholder={placeholder}
-          className="w-full pl-7 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all text-gray-800 font-medium"
+          className={inputClass}
         />
       </div>
     </div>
@@ -110,22 +117,43 @@ export default function TaxCalculator() {
     <div className="w-full max-w-6xl mx-auto">
       <form
         onSubmit={handleCalculate}
-        className="bg-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl shadow-indigo-500/5 border border-slate-100 dark:border-slate-800 overflow-hidden"
       >
         {/* Income header band */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 md:px-8 py-5">
+        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 md:px-8 py-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white text-xl font-bold">
               1
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Your Income</h3>
-              <p className="text-sm text-emerald-50">Enter annual figures (per year, not monthly)</p>
+              <p className="text-sm text-indigo-100">Enter annual figures (per year, not monthly)</p>
             </div>
           </div>
         </div>
 
         <div className="p-6 md:p-8">
+          {/* Salary quick picks */}
+          <div className="mb-5">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Quick pick your salary:</p>
+            <div className="flex flex-wrap gap-2">
+              {salaryPresets.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, grossSalary: p.value })}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border-2 transition-all ${
+                    form.grossSalary === p.value
+                      ? "bg-indigo-600 border-indigo-600 text-white"
+                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-indigo-400"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
             {field("Annual Salary (CTC)", "grossSalary", "e.g. 1200000", {
               title: "Annual Salary / CTC",
@@ -136,11 +164,11 @@ export default function TaxCalculator() {
               text: "Any income apart from salary — bank or fixed-deposit interest, rent received, freelance or business earnings, etc.",
             })}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Age Group</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Your Age Group</label>
               <select
                 value={form.ageGroup}
                 onChange={update("ageGroup")}
-                className="w-full px-3 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all text-gray-800 font-medium"
+                className="w-full px-3 py-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 dark:focus:ring-indigo-500/20 outline-none transition-all text-slate-800 dark:text-slate-100 font-medium"
               >
                 <option value="below60">Below 60 years</option>
                 <option value="senior">Senior Citizen (60-80)</option>
@@ -151,18 +179,18 @@ export default function TaxCalculator() {
 
           {/* Deductions header */}
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-xl font-bold">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-700 dark:text-indigo-300 text-xl font-bold">
               2
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-800">Your Investments &amp; Deductions</h3>
-              <p className="text-sm text-gray-500">
-                Don&apos;t know these? Tap the <span className="font-bold text-emerald-600">?</span> icons — we explain each one in simple words.
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">Your Investments &amp; Deductions</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Don&apos;t know these? Tap the <span className="font-bold text-indigo-600 dark:text-indigo-400">?</span> icons — we explain each in simple words.
               </p>
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 my-4 text-sm text-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-4 py-3 my-4 text-sm text-amber-800 dark:text-amber-300">
             💡 New to taxes? Leave these blank and just enter your salary. We&apos;ll still calculate your tax AND show you what to invest in to save more.
           </div>
 
@@ -185,7 +213,7 @@ export default function TaxCalculator() {
             })}
             {field("HRA Exemption", "hraExemption", "e.g. 0", {
               title: "HRA — House Rent Allowance",
-              text: "If you live in a rented home and get HRA in your salary, part of it is tax-free. Roughly the lowest of: actual HRA received, 50% of basic salary (metro)/40% (non-metro), or rent paid minus 10% of basic. Keep your rent receipts.",
+              text: "If you live in a rented home and get HRA in your salary, part of it is tax-free. Roughly the lowest of: actual HRA received, 50% of basic (metro)/40% (non-metro), or rent paid minus 10% of basic. Keep your rent receipts.",
             })}
             {field("Other Deductions", "otherDeductions", "e.g. 0", {
               title: "Other Deductions",
@@ -194,18 +222,18 @@ export default function TaxCalculator() {
           </div>
 
           {error && (
-            <div className="mt-5 bg-red-50 border border-red-200 rounded-xl p-3 text-red-700 text-sm font-medium">
+            <div className="mt-5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 rounded-xl p-3 text-red-700 dark:text-red-400 text-sm font-medium">
               ⚠️ {error}
             </div>
           )}
 
           <button
             type="submit"
-            className="mt-7 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-4 rounded-2xl hover:from-emerald-700 hover:to-teal-700 transition-all shadow-lg hover:shadow-xl text-lg active:scale-[0.99]"
+            className="mt-7 w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold py-4 rounded-2xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/30 text-lg active:scale-[0.99]"
           >
             Calculate My Tax &amp; Show Savings →
           </button>
-          <p className="text-center text-xs text-gray-400 mt-3">
+          <p className="text-center text-xs text-slate-400 mt-3">
             🔒 100% private. All maths runs in your browser. We never store or see your data.
           </p>
         </div>

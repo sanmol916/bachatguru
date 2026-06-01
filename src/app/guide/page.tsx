@@ -51,26 +51,26 @@ const sections = [
 
 export default function GuidePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-br from-emerald-700 to-teal-700 text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="bg-gradient-to-br from-indigo-700 via-violet-700 to-purple-800 text-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
           <h1 className="text-3xl md:text-4xl font-extrabold mb-3">
             Complete Tax Saving Guide (FY 2025-26)
           </h1>
-          <p className="text-emerald-50">
+          <p className="text-indigo-50">
             Everything you need to know to legally minimize your income tax in India.
           </p>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-8 text-center">
-          <p className="text-emerald-800 font-medium mb-3">
+        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-5 mb-8 text-center">
+          <p className="text-indigo-800 dark:text-indigo-300 font-medium mb-3">
             Want to know exactly how much YOU can save?
           </p>
           <Link
             href="/#calculator"
-            className="inline-block bg-emerald-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-emerald-700 transition-colors"
+            className="inline-block bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Use the Free Calculator →
           </Link>
@@ -78,14 +78,14 @@ export default function GuidePage() {
 
         <div className="space-y-8">
           {sections.map((s) => (
-            <div key={s.id} id={s.id} className="bg-white rounded-xl p-6 border border-gray-200 scroll-mt-20">
-              <h2 className="text-xl font-bold text-gray-800 mb-3">{s.title}</h2>
-              <p className="text-gray-600 leading-relaxed">{s.body}</p>
+            <div key={s.id} id={s.id} className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-200 dark:border-slate-800 scroll-mt-20">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-3">{s.title}</h2>
+              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">{s.body}</p>
             </div>
           ))}
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mt-8 text-sm text-blue-800">
+        <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl p-5 mt-8 text-sm text-blue-800 dark:text-blue-300">
           <strong>Disclaimer:</strong> This guide is for educational purposes and reflects FY 2025-26 / 2026-27
           rules. Tax laws are complex and change over time. Always consult a qualified Chartered Accountant
           before making investment or filing decisions.
