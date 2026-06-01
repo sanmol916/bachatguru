@@ -9,11 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://bachatguru.in"),
   title: {
-    default: "BachatGuru - Free Income Tax Calculator India FY 2025-26 | Old vs New Regime",
+    default: "BachatGuru - Personalized Tax-Saving Plan & Income Tax Calculator India FY 2025-26",
     template: "%s | BachatGuru",
   },
   description:
-    "Free income tax calculator for India FY 2025-26 & 2026-27. Compare old vs new tax regime instantly, see which saves you more, and get personalized tax-saving tips for 80C, 80D, NPS & home loan.",
+    "Get your personalized tax-saving plan for India FY 2025-26 & 2026-27. Based on your income, family & goals, we show the exact investment mix (80C, 80D, NPS, home loan) to legally minimize tax — plus an instant old vs new regime comparison.",
   keywords: [
     "income tax calculator",
     "tax calculator india",

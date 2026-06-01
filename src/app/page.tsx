@@ -27,20 +27,20 @@ export default function HomePage() {
                 Updated for FY 2025-26 &amp; FY 2026-27
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-5">
-                Pay Less Tax.
+                Your Personal Plan to
                 <br />
-                <span className="text-yellow-300">Keep More Money.</span>
+                <span className="text-yellow-300">Save the Most Tax.</span>
               </h1>
               <p className="text-lg text-indigo-50 mb-8 max-w-lg">
-                India&apos;s smartest free tax calculator. Compare the old vs new regime,
-                find out which saves you more, and get a personalized plan to legally cut your tax — in 30 seconds.
+                Tell us about you — your income, family, home and goals. We build the exact
+                investment mix to legally cut your tax to the minimum, and compare both regimes for you. Free, in 30 seconds.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="#calculator"
                   className="inline-flex items-center justify-center bg-white text-indigo-700 font-bold py-4 px-8 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl text-lg active:scale-95"
                 >
-                  Calculate My Tax — Free →
+                  Build My Plan — Free →
                 </Link>
                 <Link
                   href="/guide"
@@ -93,11 +93,11 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-2">
-              Free Income Tax Calculator
+              Build Your Personalized Tax-Saving Plan
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg">
-              Confused by tax terms? Every field has a simple explanation. Just tap the{" "}
-              <span className="font-bold text-indigo-600 dark:text-indigo-400">?</span>
+              Answer a few quick questions and get your exact plan + an old-vs-new regime comparison.
+              Confused by a term? Tap the <span className="font-bold text-indigo-600 dark:text-indigo-400">?</span>
             </p>
           </div>
           <TaxCalculator />

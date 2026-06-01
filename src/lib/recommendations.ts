@@ -1,132 +1,209 @@
-import { TaxInput, calculateOldRegime, formatINR } from "./tax";
+import { TaxInput, calculateOldRegime, calculateNewRegime } from "./tax";
 
-export interface Recommendation {
+// ---- Personal context that makes the plan truly personalized ----
+export interface PersonalContext {
+  maritalStatus: "single" | "married";
+  dependentSeniorParents: boolean; // parents you can insure (senior citizens)
+  housing: "own_loan" | "own_noloan" | "rented" | "family";
+  schoolKids: boolean;
+  riskAppetite: "low" | "medium" | "high";
+}
+
+export interface PlanStep {
   id: string;
   title: string;
   section: string;
-  description: string;
-  investNow: number; // amount they can still invest
-  taxSaved: number; // tax they would save
-  priority: "high" | "medium" | "low";
-  category: "elss" | "insurance" | "nps" | "ppf" | "homeloan" | "health" | "other";
+  invest: number; // money you put in (0 for "claim what you already pay" steps)
+  taxSaved: number; // tax reduced by this step (old-regime basis)
+  why: string;
+  category: string; // for affiliate links
   ctaLabel: string;
+  advisoryOnly?: boolean; // step where we can't compute exact savings
 }
 
-// Marginal tax rate in OLD regime (used to estimate savings from deductions)
-function marginalRateOld(taxableIncome: number, ageGroup: TaxInput["ageGroup"]): number {
-  const basicExemption =
-    ageGroup === "supersenior" ? 500000 : ageGroup === "senior" ? 300000 : 250000;
-  if (taxableIncome <= basicExemption) return 0;
-  if (taxableIncome <= 500000) return 0.05;
-  if (taxableIncome <= 1000000) return 0.2;
-  return 0.3;
+export interface PersonalizedPlan {
+  steps: PlanStep[];
+  baselineTax: number; // best tax you'd pay TODAY (min of old/new with current inputs)
+  optimizedTax: number; // best tax AFTER following the plan
+  totalTaxSaved: number;
+  totalToInvest: number;
+  recommendedRegime: "old" | "new";
+  regimeNote: string;
+  newRegimeTax: number;
+  optimizedOldTax: number;
 }
 
-// Generate personalized tax-saving recommendations.
-// These deductions only help in the OLD regime, so we estimate based on it.
-export function getRecommendations(input: TaxInput): {
-  recommendations: Recommendation[];
-  totalPotentialSaving: number;
-} {
-  const recs: Recommendation[] = [];
-  const old = calculateOldRegime(input);
-  const rate = marginalRateOld(old.taxableIncome, input.ageGroup);
-  const cessMultiplier = 1.04; // include 4% cess in savings
-
-  // 1. Section 80C headroom (cap 1.5L)
-  const used80C = Math.min(input.section80C, 150000);
-  const headroom80C = 150000 - used80C;
-  if (headroom80C > 0 && rate > 0) {
-    const saved = headroom80C * rate * cessMultiplier;
-    recs.push({
-      id: "80c-elss",
-      title: `Invest ${formatINR(headroom80C)} more under Section 80C`,
-      section: "80C",
-      description: `You have ${formatINR(headroom80C)} unused 80C limit. Invest in ELSS mutual funds (3-year lock-in, equity growth), PPF, or pay life insurance premium to claim this deduction.`,
-      investNow: headroom80C,
-      taxSaved: Math.round(saved),
-      priority: "high",
+function riskProduct(risk: PersonalContext["riskAppetite"]) {
+  if (risk === "high")
+    return {
+      product: "ELSS mutual funds",
       category: "elss",
-      ctaLabel: "Explore ELSS Funds",
+      cta: "Explore ELSS Funds",
+      note: "ELSS has the shortest lock-in (3 years) of all 80C options and equity-level growth — ideal for your high risk appetite.",
+    };
+  if (risk === "low")
+    return {
+      product: "PPF or a 5-year tax-saving FD",
+      category: "ppf",
+      cta: "Open a PPF Account",
+      note: "PPF is government-backed and fully safe with tax-free returns — perfect for a low risk appetite.",
+    };
+  return {
+    product: "a mix of ELSS and PPF",
+    category: "elss",
+    cta: "Explore ELSS & PPF",
+    note: "Splitting between ELSS (growth) and PPF (safe, tax-free) balances risk and return for you.",
+  };
+}
+
+export function getPersonalizedPlan(
+  input: TaxInput,
+  ctx: PersonalContext
+): PersonalizedPlan {
+  const newRegimeTax = calculateNewRegime(input).totalTax;
+  const baselineOldTax = calculateOldRegime(input).totalTax;
+  const baselineTax = Math.min(newRegimeTax, baselineOldTax);
+
+  const working: TaxInput = { ...input };
+  let prevOldTax = baselineOldTax;
+  const steps: PlanStep[] = [];
+
+  // helper: apply a field change, recompute old-regime tax, return saving
+  const applyAndMeasure = (apply: () => void): number => {
+    apply();
+    const newTax = calculateOldRegime(working).totalTax;
+    const saved = Math.max(0, prevOldTax - newTax);
+    prevOldTax = newTax;
+    return saved;
+  };
+
+  // 1) Section 80C headroom
+  const used80C = Math.min(input.section80C, 150000);
+  const add80C = 150000 - used80C;
+  if (add80C > 0) {
+    const rp = riskProduct(ctx.riskAppetite);
+    const kidsNote = ctx.schoolKids
+      ? " Your children's school tuition fees also count under 80C — include them first, then top up the rest."
+      : "";
+    const saved = applyAndMeasure(() => {
+      working.section80C = used80C + add80C;
+    });
+    steps.push({
+      id: "80c",
+      title: `Invest ₹${add80C.toLocaleString("en-IN")} in ${rp.product}`,
+      section: "80C",
+      invest: add80C,
+      taxSaved: saved,
+      why: `${rp.note}${kidsNote}`,
+      category: rp.category,
+      ctaLabel: rp.cta,
     });
   }
 
-  // 2. Section 80CCD(1B) - extra NPS (cap 50k, over and above 80C)
-  const used80CCD1B = Math.min(input.section80CCD1B, 50000);
-  const headroomNPS = 50000 - used80CCD1B;
-  if (headroomNPS > 0 && rate > 0) {
-    const saved = headroomNPS * rate * cessMultiplier;
-    recs.push({
-      id: "80ccd1b-nps",
-      title: `Invest ${formatINR(headroomNPS)} in NPS (Section 80CCD-1B)`,
+  // 2) NPS — extra ₹50,000 under 80CCD(1B)
+  const usedNPS = Math.min(input.section80CCD1B, 50000);
+  const addNPS = 50000 - usedNPS;
+  if (addNPS > 0) {
+    const saved = applyAndMeasure(() => {
+      working.section80CCD1B = usedNPS + addNPS;
+    });
+    steps.push({
+      id: "nps",
+      title: `Invest ₹${addNPS.toLocaleString("en-IN")} in NPS for retirement`,
       section: "80CCD(1B)",
-      description: `NPS gives an EXTRA ${formatINR(50000)} deduction over and above 80C. Great for retirement, lowest-cost pension product in India.`,
-      investNow: headroomNPS,
-      taxSaved: Math.round(saved),
-      priority: "high",
+      invest: addNPS,
+      taxSaved: saved,
+      why: "NPS gives an EXTRA ₹50,000 deduction over and above your ₹1.5 lakh 80C limit — the only way to claim a full ₹2 lakh. It's India's lowest-cost pension scheme.",
       category: "nps",
       ctaLabel: "Open NPS Account",
     });
   }
 
-  // 3. Section 80D - health insurance
+  // 3) Health insurance — 80D (self + parents if dependent & senior)
   const selfLimit = input.ageGroup === "below60" ? 25000 : 50000;
-  // Assume parents' cover possible: add a parent bucket (senior parents = 50k)
-  const recommendedHealthCover = selfLimit + 50000; // self/family + parents
-  const used80D = input.section80D;
-  const headroom80D = Math.max(0, recommendedHealthCover - used80D);
-  if (headroom80D > 0 && rate > 0) {
-    const saved = headroom80D * rate * cessMultiplier;
-    recs.push({
-      id: "80d-health",
-      title: `Buy health insurance — claim up to ${formatINR(headroom80D)} (Section 80D)`,
+  const parentAdd = ctx.dependentSeniorParents ? 50000 : 0;
+  const recommendedHealth = selfLimit + parentAdd;
+  const add80D = Math.max(0, recommendedHealth - input.section80D);
+  if (add80D > 0) {
+    const familyWord = ctx.maritalStatus === "married" ? "you, your spouse & kids" : "yourself";
+    const parentWord = parentAdd > 0 ? " plus a separate policy for your senior-citizen parents (extra ₹50,000 deduction)" : "";
+    const saved = applyAndMeasure(() => {
+      working.section80D = input.section80D + add80D;
+    });
+    steps.push({
+      id: "80d",
+      title: `Buy health insurance worth ₹${add80D.toLocaleString("en-IN")} in premium`,
       section: "80D",
-      description: `Health insurance premium for yourself (${formatINR(selfLimit)}) and your parents (up to ${formatINR(50000)} if senior citizens) is deductible. Protects your savings AND cuts tax.`,
-      investNow: headroom80D,
-      taxSaved: Math.round(saved),
-      priority: "medium",
+      invest: add80D,
+      taxSaved: saved,
+      why: `Cover ${familyWord}${parentWord}. It protects your savings from medical emergencies AND cuts tax — a double win.`,
       category: "health",
       ctaLabel: "Compare Health Plans",
     });
   }
 
-  // 4. Home loan interest (Section 24b, cap 2L)
-  const usedHomeLoan = Math.min(input.homeLoanInterest, 200000);
-  const headroomHomeLoan = 200000 - usedHomeLoan;
-  if (usedHomeLoan > 0 && headroomHomeLoan > 0 && rate > 0) {
-    const saved = headroomHomeLoan * rate * cessMultiplier;
-    recs.push({
-      id: "24b-homeloan",
-      title: `You can claim ${formatINR(headroomHomeLoan)} more home loan interest`,
-      section: "24(b)",
-      description: `Self-occupied home loan interest is deductible up to ${formatINR(200000)}/year. You've used ${formatINR(usedHomeLoan)}. Pre-paying or a top-up loan can use the remaining limit.`,
-      investNow: 0,
-      taxSaved: Math.round(saved),
-      priority: "low",
-      category: "homeloan",
-      ctaLabel: "Check Home Loan Options",
-    });
+  // 4) Home loan interest — only relevant if they own with a loan
+  if (ctx.housing === "own_loan") {
+    const usedHL = Math.min(input.homeLoanInterest, 200000);
+    const addHL = 200000 - usedHL;
+    if (addHL > 0) {
+      const saved = applyAndMeasure(() => {
+        working.homeLoanInterest = usedHL + addHL;
+      });
+      steps.push({
+        id: "homeloan",
+        title: `Claim up to ₹${addHL.toLocaleString("en-IN")} more home-loan interest`,
+        section: "24(b)",
+        invest: 0,
+        taxSaved: saved,
+        why: "You own a home with a loan — the interest you pay is deductible up to ₹2 lakh/year. Make sure you claim the full amount you're already paying.",
+        category: "homeloan",
+        ctaLabel: "Check Home Loan Options",
+      });
+    }
   }
 
-  // 5. Term insurance reminder (counts under 80C but also vital protection)
-  if (rate > 0) {
-    recs.push({
-      id: "term-insurance",
-      title: "Get term life insurance (protection + 80C benefit)",
-      section: "80C",
-      description: `If you have dependents, a term plan is essential. Premiums qualify under 80C. A ₹1 crore cover costs as little as ₹800/month for a healthy 30-year-old.`,
-      investNow: 0,
+  // 5) HRA advisory — if renting and not yet claiming
+  if (ctx.housing === "rented" && input.hraExemption === 0) {
+    steps.push({
+      id: "hra",
+      title: "Claim your HRA (House Rent Allowance)",
+      section: "HRA",
+      invest: 0,
       taxSaved: 0,
-      priority: headroom80C > 0 ? "medium" : "low",
-      category: "insurance",
-      ctaLabel: "Compare Term Plans",
+      why: "You live in a rented home — a big chunk of your HRA can be tax-free. Submit rent receipts (and your landlord's PAN if rent exceeds ₹1 lakh/year) to your employer. Re-run this tool with your HRA exemption to see the exact saving.",
+      category: "other",
+      ctaLabel: "Learn about HRA",
+      advisoryOnly: true,
     });
   }
 
-  const totalPotentialSaving = recs.reduce((sum, r) => sum + r.taxSaved, 0);
+  const optimizedOldTax = prevOldTax;
+  const optimizedTax = Math.min(optimizedOldTax, newRegimeTax);
+  const totalTaxSaved = Math.max(0, baselineTax - optimizedTax);
+  const totalToInvest = steps.reduce((s, st) => s + st.invest, 0);
 
-  // Sort by tax saved (highest first), then priority
-  recs.sort((a, b) => b.taxSaved - a.taxSaved);
+  const recommendedRegime: "old" | "new" =
+    optimizedOldTax <= newRegimeTax ? "old" : "new";
 
-  return { recommendations: recs, totalPotentialSaving: Math.round(totalPotentialSaving) };
+  let regimeNote: string;
+  if (recommendedRegime === "old") {
+    regimeNote =
+      "After following this plan, the Old Regime becomes your cheapest option. The amounts you invest also build your long-term wealth.";
+  } else {
+    regimeNote =
+      "Important: even after maxing out these deductions, the New Regime stays cheaper for your income — so it remains your best choice. The investments below are still excellent for building wealth, but won't reduce your tax further. Pick the New Regime when filing.";
+  }
+
+  return {
+    steps,
+    baselineTax,
+    optimizedTax,
+    totalTaxSaved,
+    totalToInvest,
+    recommendedRegime,
+    regimeNote,
+    newRegimeTax,
+    optimizedOldTax,
+  };
 }
