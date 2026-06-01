@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { compareRegimes, type TaxInput, type AgeGroup } from "@/lib/tax";
 import { getPersonalizedPlan, type PersonalContext, type PersonalizedPlan } from "@/lib/recommendations";
 import ResultsPanel from "./ResultsPanel";
@@ -52,6 +52,57 @@ export default function TaxCalculator() {
   const [result, setResult] = useState<ReturnType<typeof compareRegimes> | null>(null);
   const [plan, setPlan] = useState<PersonalizedPlan | null>(null);
   const [error, setError] = useState("");
+  const [hydrated, setHydrated] = useState(false);
+  const [savedNote, setSavedNote] = useState(false);
+
+  // Load any previously saved inputs (this device only)
+  useEffect(() => {
+    try {
+      const sf = localStorage.getItem("bg_form");
+      const sc = localStorage.getItem("bg_ctx");
+      if (sf) setForm((f) => ({ ...f, ...JSON.parse(sf) }));
+      if (sc) setCtx((c) => ({ ...c, ...JSON.parse(sc) }));
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Save inputs whenever they change (after initial load)
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem("bg_form", JSON.stringify(form));
+      localStorage.setItem("bg_ctx", JSON.stringify(ctx));
+      setSavedNote(true);
+      const t = setTimeout(() => setSavedNote(false), 1500);
+      return () => clearTimeout(t);
+    } catch {}
+  }, [form, ctx, hydrated]);
+
+  const resetForm = () => {
+    setForm({
+      grossSalary: "",
+      otherIncome: "",
+      ageGroup: "below60",
+      section80C: "",
+      section80D: "",
+      section80CCD1B: "",
+      homeLoanInterest: "",
+      hraExemption: "",
+      otherDeductions: "",
+    });
+    setCtx({
+      maritalStatus: "single",
+      dependentSeniorParents: false,
+      housing: "rented",
+      schoolKids: false,
+      riskAppetite: "medium",
+    });
+    setShowResults(false);
+    try {
+      localStorage.removeItem("bg_form");
+      localStorage.removeItem("bg_ctx");
+    } catch {}
+  };
 
   const num = (v: string) => (v === "" ? 0 : Math.max(0, parseFloat(v) || 0));
 
@@ -332,9 +383,18 @@ export default function TaxCalculator() {
           >
             Build My Personalized Tax-Saving Plan →
           </button>
-          <p className="text-center text-xs text-slate-400 mt-3">
-            🔒 100% private. All maths runs in your browser. We never store or see your data.
-          </p>
+          <div className="flex items-center justify-center gap-4 mt-3">
+            <p className="text-xs text-slate-400">
+              {savedNote ? "💾 Saved on this device" : "🔒 100% private — saved only on your device"}
+            </p>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="text-xs font-medium text-slate-400 hover:text-red-500 underline transition-colors"
+            >
+              Reset form
+            </button>
+          </div>
         </div>
       </form>
 

@@ -12,9 +12,10 @@ export default function ThemeToggle() {
   }, []);
 
   const toggle = () => {
-    const next = !dark;
+    const root = document.documentElement;
+    const next = !root.classList.contains("dark");
+    root.classList.toggle("dark", next);
     setDark(next);
-    document.documentElement.classList.toggle("dark", next);
     try {
       localStorage.setItem("theme", next ? "dark" : "light");
     } catch {}
@@ -22,13 +23,15 @@ export default function ThemeToggle() {
 
   return (
     <button
+      type="button"
       onClick={toggle}
       aria-label="Toggle dark mode"
-      className="relative w-12 h-7 rounded-full bg-slate-200 dark:bg-slate-700 transition-colors flex items-center px-1 shrink-0"
+      title="Toggle dark / light mode"
+      className="relative w-14 h-8 rounded-full bg-slate-200 dark:bg-slate-700 ring-1 ring-slate-300 dark:ring-slate-600 transition-colors flex items-center px-1 shrink-0 cursor-pointer"
     >
       <span
-        className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-white dark:bg-slate-900 shadow-md text-[11px] transform transition-transform ${
-          mounted && dark ? "translate-x-5" : "translate-x-0"
+        className={`inline-flex items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-slate-900 shadow-md text-xs transform transition-transform duration-300 ${
+          mounted && dark ? "translate-x-6" : "translate-x-0"
         }`}
       >
         {mounted && dark ? "🌙" : "☀️"}
