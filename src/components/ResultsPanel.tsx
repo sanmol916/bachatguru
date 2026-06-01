@@ -5,6 +5,7 @@ import { formatINR, type ComparisonResult } from "@/lib/tax";
 import type { PersonalizedPlan } from "@/lib/recommendations";
 import { downloadPlanPdf } from "@/lib/pdf";
 import CountUp from "./CountUp";
+import LeadModal from "./LeadModal";
 
 interface Props {
   result: ComparisonResult;
@@ -25,6 +26,7 @@ const categoryLinks: Record<string, string> = {
 export default function ResultsPanel({ result, plan }: Props) {
   const { oldRegime, newRegime, recommended } = result;
   const [copied, setCopied] = useState(false);
+  const [showLead, setShowLead] = useState(false);
   const maxTax = Math.max(oldRegime.totalTax, newRegime.totalTax, 1);
 
   const handleShare = async () => {
@@ -166,6 +168,30 @@ export default function ResultsPanel({ result, plan }: Props) {
         </div>
       )}
 
+      {/* ===== EXPERT HELP CTA (lead capture) ===== */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-900 text-white p-6 md:p-8 shadow-lg">
+        <div className="absolute inset-0 bg-grid opacity-20" />
+        <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xl md:text-2xl font-extrabold mb-1">
+              {plan.totalTaxSaved > 0
+                ? `Want help saving that ${formatINR(plan.totalTaxSaved)}?`
+                : "Want a tax expert to double-check your plan?"}
+            </h3>
+            <p className="text-indigo-100 text-sm max-w-md">
+              Get a <strong>free 15-minute consultation</strong> with a verified tax expert who&apos;ll help you
+              implement this plan, pick the right products, and file correctly.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowLead(true)}
+            className="shrink-0 bg-white text-indigo-700 font-bold py-3.5 px-7 rounded-2xl hover:bg-indigo-50 transition-all shadow-xl text-lg active:scale-95 whitespace-nowrap"
+          >
+            Get Free Expert Help →
+          </button>
+        </div>
+      </div>
+
       {/* ===== REGIME COMPARISON ===== */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
         <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-1">Old vs New Regime (your current numbers)</h3>
@@ -186,6 +212,16 @@ export default function ResultsPanel({ result, plan }: Props) {
         <strong>Note:</strong> Calculations use FY 2025-26 / FY 2026-27 tax rules (Budget 2026, no slab changes).
         Surcharge for incomes above ₹50L is not included. Always verify with a qualified tax professional before filing.
       </div>
+
+      <LeadModal
+        open={showLead}
+        onClose={() => setShowLead(false)}
+        context={{
+          grossIncome: oldRegime.grossIncome,
+          potentialSaving: plan.totalTaxSaved,
+          recommendedRegime: plan.recommendedRegime === "old" ? "Old Regime" : "New Regime",
+        }}
+      />
     </div>
   );
 }
