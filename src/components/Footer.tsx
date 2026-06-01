@@ -38,7 +38,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-8 pt-8 text-center text-xs text-slate-500 space-y-2">
+        <div className="border-t border-slate-800 mt-8 pt-8 text-center text-xs text-slate-500 space-y-3">
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
+            <Link href="/about" className="hover:text-indigo-400 transition-colors">About</Link>
+            <Link href="/contact" className="hover:text-indigo-400 transition-colors">Contact</Link>
+            <Link href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy Policy</Link>
+            <Link href="/disclaimer" className="hover:text-indigo-400 transition-colors">Disclaimer</Link>
+            <Link href="/guide" className="hover:text-indigo-400 transition-colors">Tax Guide</Link>
+          </div>
           <p>
             <strong>Disclaimer:</strong> BachatGuru is a free guidance tool, not a substitute for professional tax advice.
             Calculations are estimates based on FY 2025-26 / 2026-27 rules. Consult a qualified Chartered Accountant before filing.
